@@ -17,12 +17,10 @@ class DateXAxisValueFormatter extends ValueFormatter {
     public String getAxisLabel(float value, AxisBase axis) {
         int idx = (int)value;
 
-        java.util.Date time=new java.util.Date((dates.get(idx) + 3*3600)*1000);
+        java.util.Date time = new java.util.Date((dates.get(idx) + 3*3600)*1000);
 
         String pattern = "HH:mm";
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
-
-
-        return String.valueOf(simpleDateFormat.format(time));
+        return simpleDateFormat.format(time);
     }
 }

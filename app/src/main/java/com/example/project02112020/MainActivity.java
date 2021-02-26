@@ -5,7 +5,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.RadioButton;
-import android.widget.SeekBar;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -21,6 +20,7 @@ import com.google.gson.Gson;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -33,6 +33,11 @@ public class MainActivity extends AppCompatActivity {
     LineChart chart1;
     Forecast forecast;
     List[] list;
+
+    float maxToInit = 0;
+    float minToInit = 0;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,7 +107,6 @@ public class MainActivity extends AppCompatActivity {
         yAxis.setAxisMinimum(min);
         XAxis xAxis = chart1.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-
     }
 
     public void getData() {
@@ -115,14 +119,12 @@ public class MainActivity extends AppCompatActivity {
                 Gson gson = new Gson();
                 forecast = gson.fromJson(is, Forecast.class);
                 PogodynkaConnection.disconnect();
-                System.out.println(forecast); //wyswietla
+                System.out.println(forecast); //display
                 list = forecast.getList();
                 System.out.println(list[0].getClouds());
                 System.out.println(list[1].getClouds());
                 System.out.println(list[2].getClouds());
                 System.out.println(list[3].getClouds());
-
-
             } else {
                 //error
             }
@@ -149,16 +151,29 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void setTemperature(){
+        maxToInit = 0;
+        minToInit = 0;
+
         ArrayList<Entry> temperatura = new ArrayList<>();
         ArrayList<Long> dates = new ArrayList<>();
+        Float [] temps = new Float[list.length];
+
         int i = 0;
         for(List x: list){
             Float temp = Float.parseFloat(x.getMain().getTemp());
+            temps[i] = temp;
             Entry entry = new Entry((float)i, temp);
             temperatura.add(entry);
             dates.add(Long.parseLong(x.getDt()));
             i++;
         }
+
+        Arrays.sort(temps);
+
+        maxToInit = temps[temps.length-1] + 10;
+        minToInit = temps[0] - 5;
+
+        init(maxToInit, minToInit);
 
         XAxis xAxis = chart1.getXAxis();
         xAxis.setValueFormatter(new DateXAxisValueFormatter(dates));
@@ -174,19 +189,30 @@ public class MainActivity extends AppCompatActivity {
         dataSets.add(set1);
         LineData data = new LineData(dataSets);
         chart1.setData(data);
+        chart1.invalidate();
     }
 
     public void setPressure(){
         ArrayList<Entry> cisnienie = new ArrayList<>();
         ArrayList<Long> dates = new ArrayList<>();
+        Float [] press = new Float[list.length];
+
         int i = 0;
         for(List x: list){
             Float pressure = Float.parseFloat(x.getMain().getPressure());
+            press[i] = pressure;
             Entry entry = new Entry((float)i, pressure);
             cisnienie.add(entry);
             dates.add(Long.parseLong(x.getDt()));
             i++;
         }
+
+        Arrays.sort(press);
+
+        maxToInit = press[press.length -1 ] + 15;
+        minToInit = press[0] - 10;
+
+        init(maxToInit,  minToInit);
 
         XAxis xAxis = chart1.getXAxis();
         xAxis.setValueFormatter(new DateXAxisValueFormatter(dates));
@@ -202,19 +228,31 @@ public class MainActivity extends AppCompatActivity {
         dataSets.add(set2);
         LineData data = new LineData(dataSets);
         chart1.setData(data);
+        chart1.invalidate();
     }
 
     public void setWind(){
         ArrayList<Entry> wiatr = new ArrayList<>();
         ArrayList<Long> dates = new ArrayList<>();
+        Float [] wi = new Float[list.length];
+
         int i = 0;
         for(List x: list){
             Float wind = Float.parseFloat(x.getWind().getSpeed());
+            wi[i] = wind;
             Entry entry = new Entry((float)i, wind);
             wiatr.add(entry);
             dates.add(Long.parseLong(x.getDt()));
             i++;
         }
+
+        Arrays.sort(wi);
+
+        maxToInit = wi[wi.length - 1] + 5;
+        minToInit = wi[0] - 5;
+        if (minToInit < 0) minToInit = 0;
+
+        init(maxToInit,  minToInit);
 
         XAxis xAxis = chart1.getXAxis();
         xAxis.setValueFormatter(new DateXAxisValueFormatter(dates));
@@ -230,19 +268,32 @@ public class MainActivity extends AppCompatActivity {
         dataSets.add(set2);
         LineData data = new LineData(dataSets);
         chart1.setData(data);
+        chart1.invalidate();
     }
 
     public void setClouds(){
         ArrayList<Entry> zachmurzenie = new ArrayList<>();
         ArrayList<Long> dates = new ArrayList<>();
+        Float [] cloudy = new Float[list.length];
+
         int i = 0;
         for(List x: list){
             Float clouds = Float.parseFloat(x.getClouds().getAll());
+            cloudy[i] = clouds;
             Entry entry = new Entry((float)i, clouds);
             zachmurzenie.add(entry);
             dates.add(Long.parseLong(x.getDt()));
             i++;
         }
+
+        Arrays.sort(cloudy);
+
+        maxToInit = cloudy[cloudy.length - 1] + 5;
+        if(maxToInit > 100) maxToInit = 100;
+        minToInit = cloudy[0] - 5;
+        if (minToInit < 0) minToInit = 0;
+
+        init(maxToInit,  minToInit);
 
         XAxis xAxis = chart1.getXAxis();
         xAxis.setValueFormatter(new DateXAxisValueFormatter(dates));
@@ -251,28 +302,25 @@ public class MainActivity extends AppCompatActivity {
         set2 = new LineDataSet(zachmurzenie, "Zachmurzenie");
         set2.setLineWidth(1.5f);
         set2.setDrawCircles(false);
-        set2.setColor(Color.YELLOW);
+        set2.setColor(Color.CYAN);
         set2.setDrawValues(false);
 
         ArrayList<ILineDataSet> dataSets = new ArrayList<>();
         dataSets.add(set2);
         LineData data = new LineData(dataSets);
         chart1.setData(data);
+        chart1.invalidate(); //update
     }
 
     public void setData(){
         if(tempRB.isChecked()){
-            init(55,  -40);
             setTemperature();
         } else if(pressureRB.isChecked()){
-            init(1250, 900);
             setPressure();
         }
         else if(windRB.isChecked()){
-            init(200, 0);
             setWind();
         } else if (cloudsRB.isChecked()){
-            init(120,0);
             setClouds();
         }
     }
